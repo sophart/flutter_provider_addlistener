@@ -44,6 +44,38 @@ class _ContentState extends State<Content> {
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
   String? searchTerm;
 
+  late final AppProvider _appProvider;
+
+  void appListener() {
+    if (_appProvider.state == AppState.success) {
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const SuccessPage(),
+          ),
+        );
+      });
+    } else if (_appProvider.state == AppState.error) {
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (_) => const AlertDialog(
+            content: Text('Something went wrong'),
+          ),
+        );
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _appProvider = context.read<AppProvider>();
+    //! The recommended approach is to use addListener
+    _appProvider.addListener(appListener);
+  }
+
   void submit() async {
     setState(() {
       _autovalidateMode = AutovalidateMode.always;
@@ -76,25 +108,25 @@ class _ContentState extends State<Content> {
 //! Navigate or showDialog in build method is dangerous
 //! the app may build serveral times
 //! so below implement is not recommended
-    if (appState == AppState.success) {
-      WidgetsBinding.instance!.addPostFrameCallback((_) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const SuccessPage(),
-          ),
-        );
-      });
-    } else if (appState == AppState.error) {
-      WidgetsBinding.instance!.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (_) => const AlertDialog(
-            content: Text('Something went wrong'),
-          ),
-        );
-      });
-    }
+    // if (appState == AppState.success) {
+    //   WidgetsBinding.instance!.addPostFrameCallback((_) {
+    //     Navigator.push(
+    //       context,
+    //       MaterialPageRoute(
+    //         builder: (_) => const SuccessPage(),
+    //       ),
+    //     );
+    //   });
+    // } else if (appState == AppState.error) {
+    //   WidgetsBinding.instance!.addPostFrameCallback((_) {
+    //     showDialog(
+    //       context: context,
+    //       builder: (_) => const AlertDialog(
+    //         content: Text('Something went wrong'),
+    //       ),
+    //     );
+    //   });
+    // }
 
     return Center(
       child: Padding(
@@ -137,5 +169,12 @@ class _ContentState extends State<Content> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    //! Dispose by removing the Listener properly
+    _appProvider.removeListener(appListener);
   }
 }
